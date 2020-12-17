@@ -1,7 +1,7 @@
 package main
 
-import "ump-agent/collection"
+import "ump-agent/ump"
 
 func main() {
-	collection.Daemon()
+	ump.Daemon()
 }
