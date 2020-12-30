@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"runtime"
-	"ump-agent/message"
+	"ump-agent/ump/header"
 	"ump-agent/ump/ops/metrics"
 )
 
@@ -24,15 +24,15 @@ type computer struct {
 
 // GeneralMsg 主机通用消息体
 type GeneralMsg struct {
-	Header   message.Header `json:"header"`
-	Computer computer       `json:"computer"`
-	Resource resource       `json:"resource"`
+	Header   header.Header `json:"header"`
+	Computer computer      `json:"computer"`
+	Resource resource      `json:"resource"`
 }
 
 // MetricsMsgPkg 指标消息体
 type MetricsMsgPkg struct {
-	Header message.Header `json:"header"`
-	Body   interface{}    `json:"body"`
+	Header header.Header `json:"header"`
+	Body   interface{}   `json:"body"`
 }
 
 // OpsResource 基本信息接口
@@ -52,8 +52,8 @@ func generalInfo(code string) *GeneralMsg {
 	arch := runtime.GOARCH
 	hostname, _ := os.Hostname()
 	msg := new(GeneralMsg)
-	msg.Header.MsgType = message.TYPENODE
-	msg.Header.Item = message.ITEMGENERAL
+	msg.Header.MsgType = header.TYPENODE
+	msg.Header.Item = header.ITEMGENERAL
 	msg.Header.ActionCode = code
 	msg.Computer.Platform = runtime.GOOS
 	msg.Computer.HostName = hostname //主机名称
@@ -69,17 +69,17 @@ func CollectInfo(metricsType string) (*MetricsMsgPkg, error) {
 	var s interface{}
 	var err error
 	metricsMsgPkg := new(MetricsMsgPkg)
-	metricsMsgPkg.Header.MsgType = message.TYPEMETRICS
+	metricsMsgPkg.Header.MsgType = header.TYPEMETRICS
 	switch metricsType {
 	case "cpu":
 		s, err = metrics.GetCPUTotalStat()
-		metricsMsgPkg.Header.Item = message.ITEMCPU
+		metricsMsgPkg.Header.Item = header.ITEMCPU
 	case "memory":
 		s, err = metrics.GetMemState()
-		metricsMsgPkg.Header.Item = message.ITEMMEM
+		metricsMsgPkg.Header.Item = header.ITEMMEM
 	case "disk":
 		s, err = metrics.GetDiskStat()
-		metricsMsgPkg.Header.Item = message.ITEMDISK
+		metricsMsgPkg.Header.Item = header.ITEMDISK
 	}
 	metricsMsgPkg.Body = s
 	return metricsMsgPkg, err

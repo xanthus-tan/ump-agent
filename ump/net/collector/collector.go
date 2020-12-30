@@ -8,7 +8,7 @@ import (
 	"net"
 	"regexp"
 	"time"
-	"ump-agent/message"
+	"ump-agent/ump/header"
 	"ump-agent/ump/ops"
 )
 
@@ -23,8 +23,8 @@ type nodeTime struct {
 
 // heartBeat 心跳
 type heartBeat struct {
-	Header message.Header `json:"header"`
-	Body   nodeTime       `json:"body"`
+	Header header.Header `json:"header"`
+	Body   nodeTime      `json:"body"`
 }
 
 // Work 采集器
@@ -33,7 +33,7 @@ func Work() {
 	server.Addr = "192.168.178.18"
 	server.Port = "5388"
 	initTicker := time.NewTicker(5 * time.Second)
-	heartBeatCode := message.INITCODE
+	heartBeatCode := header.INITCODE
 	var replay string
 	var connError error
 	for range initTicker.C {
@@ -45,15 +45,15 @@ func Work() {
 		if connError != nil {
 			fmt.Println(connError)
 		}
-		if replay == message.REGISTEREQUESTCODE {
+		if replay == header.REGISTEREQUESTCODE {
 			log.Print("node 注册.....")
 			server.registerNodeInfo()
 			continue
-		} else if replay == message.REGISTERSUCCESSCODE {
-			heartBeatCode = message.HEARTBEATCODE
-		} else if replay == message.CONSOLEACTIVE {
+		} else if replay == header.REGISTERSUCCESSCODE {
+			heartBeatCode = header.HEARTBEATCODE
+		} else if replay == header.CONSOLEACTIVE {
 			server.nodeMetrics(scn)
-			heartBeatCode = message.HEARTBEATCODE
+			heartBeatCode = header.HEARTBEATCODE
 		}
 
 	}
@@ -69,7 +69,7 @@ func (server *ConsoleServer) heartBeatToConsole(code string, scn int64) (string,
 	defer conn.Close()
 	nodeTime := time.Now().Format("2006-01-02 15:04:05")
 	h := new(heartBeat)
-	h.Header.MsgType = message.TYPEPROBE
+	h.Header.MsgType = header.TYPEPROBE
 	h.Header.Scn = scn
 	h.Header.ActionCode = code
 	h.Body.NodeTime = nodeTime
@@ -105,6 +105,6 @@ func (server *ConsoleServer) registerNodeInfo() error {
 	connAddr := server.Addr + ":" + server.Port
 	conn, err := net.Dial("tcp", connAddr)
 	defer conn.Close()
-	fmt.Fprintln(conn, ops.CollectGeneralInfo(message.REGISTEREQUESTCODE))
+	fmt.Fprintln(conn, ops.CollectGeneralInfo(header.REGISTEREQUESTCODE))
 	return err
 }
