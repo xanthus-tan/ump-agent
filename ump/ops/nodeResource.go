@@ -29,6 +29,12 @@ type GeneralMsg struct {
 	Resource resource       `json:"resource"`
 }
 
+// MetricsMsgPkg 指标消息体
+type MetricsMsgPkg struct {
+	Header message.Header `json:"header"`
+	Body   interface{}    `json:"body"`
+}
+
 // OpsResource 基本信息接口
 type OpsResource interface {
 	GetCpus() int          // CPU核数
@@ -37,7 +43,7 @@ type OpsResource interface {
 }
 
 // GeneralInfo 通用资源
-func generalInfo() *GeneralMsg {
+func generalInfo(code string) *GeneralMsg {
 	var b OpsResource
 	b = new(metrics.Linux)
 	cpus := b.GetCpus()
@@ -48,6 +54,7 @@ func generalInfo() *GeneralMsg {
 	msg := new(GeneralMsg)
 	msg.Header.MsgType = message.TYPENODE
 	msg.Header.Item = message.ITEMGENERAL
+	msg.Header.ActionCode = code
 	msg.Computer.Platform = runtime.GOOS
 	msg.Computer.HostName = hostname //主机名称
 	msg.Computer.Arch = arch
@@ -58,23 +65,29 @@ func generalInfo() *GeneralMsg {
 }
 
 // CollectInfo 信息采集
-func CollectInfo(metricsType string) (string, error) {
+func CollectInfo(metricsType string) (*MetricsMsgPkg, error) {
 	var s interface{}
+	var err error
+	metricsMsgPkg := new(MetricsMsgPkg)
+	metricsMsgPkg.Header.MsgType = message.TYPEMETRICS
 	switch metricsType {
 	case "cpu":
-		s, _ = metrics.GetCPUTotalStat()
+		s, err = metrics.GetCPUTotalStat()
+		metricsMsgPkg.Header.Item = message.ITEMCPU
 	case "memory":
-		s, _ = metrics.GetMemState()
+		s, err = metrics.GetMemState()
+		metricsMsgPkg.Header.Item = message.ITEMMEM
 	case "disk":
-		s, _ = metrics.GetDiskStat()
+		s, err = metrics.GetDiskStat()
+		metricsMsgPkg.Header.Item = message.ITEMDISK
 	}
-	j, err := json.Marshal(s)
-	return string(j), err
+	metricsMsgPkg.Body = s
+	return metricsMsgPkg, err
 }
 
 // CollectGeneralInfo 收集主机通用信息方法
-func CollectGeneralInfo() string {
-	c := generalInfo()
+func CollectGeneralInfo(code string) string {
+	c := generalInfo(code)
 	j, _ := json.Marshal(c)
 	return string(j)
 }

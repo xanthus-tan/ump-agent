@@ -1,13 +1,11 @@
 package metrics
 
 import (
-	"ump-agent/message"
-
 	"github.com/shirou/gopsutil/disk"
 )
 
 // DiskStat 简要硬盘状态信息
-type diskStat struct {
+type DiskStat struct {
 	Fstype      string  `json:"fstype"`
 	Total       uint64  `json:"total"`
 	Free        uint64  `json:"free"`
@@ -15,23 +13,16 @@ type diskStat struct {
 	UsedPercent float64 `json:"usedPercent"`
 }
 
-// DiskMsg 本地磁盘消息体
-type DiskMsg struct {
-	Header   message.Header `json:"header"`
-	DiskStat diskStat       `json:"body"`
-}
-
 // GetDiskStat 获取分区磁盘状态
-func GetDiskStat() (*DiskMsg, error) {
-	msg := new(DiskMsg)
+func GetDiskStat() (*DiskStat, error) {
+	msg := new(DiskStat)
 	v, err := disk.Usage("/")
-	msg.Header.MsgType = message.TYPEMETRICS
-	msg.Header.Item = message.ITEMDISK
-	msg.DiskStat.Total = v.Total
-	msg.DiskStat.Fstype = v.Fstype
-	msg.DiskStat.Free = v.Free
-	msg.DiskStat.Used = v.Used
-	msg.DiskStat.UsedPercent = v.UsedPercent
+
+	msg.Total = v.Total
+	msg.Fstype = v.Fstype
+	msg.Free = v.Free
+	msg.Used = v.Used
+	msg.UsedPercent = v.UsedPercent
 	return msg, err
 }
 
